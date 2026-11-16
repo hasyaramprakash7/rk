@@ -47,9 +47,10 @@ export async function onRequest(context) {
   const { request: req, env } = context;
   const url = new URL(req.url);
   const path = url.pathname.replace(/\/$/, "");
-  
-  // Always use /api proxy for media serving so images/videos load reliably without R2 public domain issues
-  const pub = "/api";
+  const isLocal = url.hostname === "127.0.0.1" || url.hostname === "localhost";
+  const pub = isLocal
+    ? "/api"
+    : (env.R2_PUBLIC_URL || "https://pub-945c958197b34f159564b00248bdf14c.r2.dev").replace(/\/$/, "");
 
   try {
     // Live WebSocket Endpoint (/api/ws)
@@ -66,7 +67,7 @@ export async function onRequest(context) {
       return new Response(null, { status: 101, webSocket: client });
     }
 
-    // Serve images & videos directly from R2 binding
+    // Serve images & videos directly from R2 binding in local dev
     if (req.method === "GET" && (path.startsWith("/api/img/") || path.startsWith("/api/vid/"))) {
       const key = path.replace(/^\/api\//, "");
       const rangeHeader = req.headers.get("Range");
@@ -135,6 +136,7 @@ export async function onRequest(context) {
           .run();
       }
 
+      // Sync latest name onto any existing chat session with this phone number
       await env.DB.prepare("UPDATE chat_sessions SET name = ?, updated = ? WHERE phone = ?").bind(name, now, phone).run();
 
       return json({ ok: true, phone }, 201);
@@ -150,6 +152,7 @@ export async function onRequest(context) {
       }
 
       const now = Date.now();
+      // Reuse existing session for this phone number so chat history stays unified
       const existingSession = await env.DB.prepare(
         "SELECT session_id FROM chat_sessions WHERE phone = ? ORDER BY updated DESC LIMIT 1"
       )
@@ -166,6 +169,7 @@ export async function onRequest(context) {
         .bind(sessionId, name, phone, now, now)
         .run();
 
+      // Upsert into leads table using the same normalized phone number
       const existingLead = await env.DB.prepare("SELECT id FROM leads WHERE phone = ? LIMIT 1").bind(phone).first();
       if (existingLead) {
         await env.DB.prepare("UPDATE leads SET name = ? WHERE id = ?").bind(name, existingLead.id).run();
@@ -187,6 +191,7 @@ export async function onRequest(context) {
       return json({ sessionId, name, phone, messages: history.results }, 201);
     }
 
+    // Public: Fetch messages for a specific visitor session
     if (req.method === "GET" && path === "/api/chat/messages") {
       const sessionId = url.searchParams.get("sessionId") || "";
       if (!sessionId) return json({ messages: [] });
@@ -198,6 +203,7 @@ export async function onRequest(context) {
       return json({ messages: res.results });
     }
 
+    // Public: Visitor sends a message (and optional auto-bot reply if matched)
     if (req.method === "POST" && path === "/api/chat/send") {
       const b = await req.json();
       const sessionId = String(b.sessionId || "").trim().slice(0, 64);
@@ -246,6 +252,7 @@ export async function onRequest(context) {
       return json({ ok: true });
     }
 
+    // Admin: Fetch all visitor chat threads + messages
     if (req.method === "GET" && path === "/api/chat-threads") {
       const [sessions, messages] = await Promise.all([
         env.DB.prepare("SELECT * FROM chat_sessions ORDER BY updated DESC LIMIT 200").all(),
@@ -263,6 +270,7 @@ export async function onRequest(context) {
       );
     }
 
+    // Admin: Reply directly to a visitor's chat thread
     if (req.method === "POST" && path === "/api/chat-reply") {
       const b = await req.json();
       const sessionId = String(b.sessionId || "").trim();
@@ -281,6 +289,7 @@ export async function onRequest(context) {
       return json({ ok: true }, 201);
     }
 
+    // Admin: Delete an entire visitor chat thread
     if (req.method === "DELETE" && path.startsWith("/api/chat-threads/")) {
       const sessionId = decodeURIComponent(path.split("/").pop());
       await Promise.all([
@@ -290,6 +299,7 @@ export async function onRequest(context) {
       return json({ ok: true });
     }
 
+    // Admin: Manage Dynamic Chat Q&A Rules
     if (req.method === "POST" && path === "/api/chat-faqs") {
       const b = await req.json();
       const question = String(b.question || "").trim();
@@ -321,6 +331,7 @@ export async function onRequest(context) {
       return json({ ok: true });
     }
 
+    // Admin: Upload image or video to R2 & record metadata in D1 SQL
     if (req.method === "POST" && path === "/api/images") {
       const form = await req.formData();
       const file = form.get("file");
