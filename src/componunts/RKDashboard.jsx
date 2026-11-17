@@ -5,51 +5,79 @@ const isVid = item => item && (item.mediaType === "video" || /\.(mp4|webm|mov)(\
 const normPhone = p => String(p || "").replace(/\D/g, "").slice(-10);
 
 const CSS = `
-.rd{font-family:Inter,system-ui,Arial,sans-serif;background:#f6f3ee;color:#2a231e;min-height:100vh;font-size:14px}
-.rd *{box-sizing:border-box}.rd button{font:inherit;cursor:pointer}.rd h1,.rd h2,.rd h3{font-family:"Noto Serif",Georgia,serif;font-weight:500;margin:0}
-.rd .bar{background:#2a231e;color:#fff;padding:14px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
-.rd .bar h1{font-size:18px;letter-spacing:.12em}.rd .tabs{display:flex;gap:6px;margin-left:10px;flex-wrap:wrap}.rd .tab{background:transparent;border:0;color:#cdbfae;padding:8px 14px;border-radius:6px}
-.rd .tab.on{background:#a8842f;color:#fff}.rd .sp{flex:1}.rd .bar a,.rd .bar button.lo{color:#fff;background:none;border:1px solid #6a5d50;border-radius:6px;padding:7px 12px;text-decoration:none;font-size:13px}
-.rd .wrap{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
-.rd .card{background:#fff;border:1px solid #e6dfd3;border-radius:10px;padding:18px;margin-bottom:22px}
-.rd .sub{color:#7b7167;font-size:13px;margin:4px 0 14px}
-.rd .btn{background:#2a231e;color:#fff;border:0;border-radius:6px;padding:9px 16px}.rd .btn.alt{background:#fff;color:#2a231e;border:1px solid #cfc5b8}.rd .btn.gold{background:#a8842f}.rd .btn.red{background:#fff;color:#b3261e;border:1px solid #e6b8b4}.rd .btn:disabled{opacity:.5;cursor:not-allowed}
-.rd input[type=text],.rd input[type=password],.rd select,.rd textarea{padding:9px 11px;border:1px solid #d6cdc0;border-radius:6px;background:#fff;font:inherit;min-width:0}
-.rd .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.rd .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.rd{font-family:Inter,system-ui,Arial,sans-serif;background:#f6f3ee;color:#2a231e;min-height:100vh;font-size:14px;overflow-x:hidden;width:100%}
+.rd *{box-sizing:border-box}
+.rd button{font:inherit;cursor:pointer}
+.rd h1,.rd h2,.rd h3{font-family:"Noto Serif",Georgia,serif;font-weight:500;margin:0}
+.rd .bar{background:#2a231e;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:20;width:100%}
+.rd .bar h1{font-size:16px;letter-spacing:.1em;white-space:nowrap}
+.rd .tabs{display:flex;gap:4px;margin-left:auto;margin-right:auto;flex-wrap:wrap;justify-content:center}
+.rd .tab{background:transparent;border:0;color:#cdbfae;padding:6px 10px;border-radius:6px;font-size:12.5px;white-space:nowrap}
+.rd .tab.on{background:#a8842f;color:#fff}
+.rd .bar a,.rd .bar button.lo{color:#fff;background:none;border:1px solid #6a5d50;border-radius:6px;padding:6px 10px;text-decoration:none;font-size:12px;white-space:nowrap}
+.rd .wrap{max-width:1180px;margin:0 auto;padding:16px 12px 60px;width:100%}
+.rd .card{background:#fff;border:1px solid #e6dfd3;border-radius:10px;padding:16px;margin-bottom:18px;width:100%;overflow:hidden}
+.rd .sub{color:#7b7167;font-size:13px;margin:4px 0 12px;word-break:break-word}
+.rd .btn{background:#2a231e;color:#fff;border:0;border-radius:6px;padding:8px 14px;font-size:13px;white-space:nowrap}
+.rd .btn.alt{background:#fff;color:#2a231e;border:1px solid #cfc5b8}
+.rd .btn.gold{background:#a8842f}
+.rd .btn.red{background:#fff;color:#b3261e;border:1px solid #e6b8b4}
+.rd .btn:disabled{opacity:.5;cursor:not-allowed}
+.rd input[type=text],.rd input[type=password],.rd select,.rd textarea{padding:9px 11px;border:1px solid #d6cdc0;border-radius:6px;background:#fff;font:inherit;width:100%;max-width:100%;min-width:0}
+.rd .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
+.rd .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;width:100%}
 .rd .cell{border:1px dashed #cfc5b8;border-radius:8px;overflow:hidden;background:#faf8f4;display:flex;flex-direction:column}
-.rd .cell .th{height:120px;background:#ece6db center/cover;display:grid;place-items:center;color:#9a8f82;font-size:12px;position:relative;overflow:hidden}
+.rd .cell .th{height:110px;background:#ece6db center/cover;display:grid;place-items:center;color:#9a8f82;font-size:11px;position:relative;overflow:hidden;text-align:center;padding:4px}
 .rd .cell .th video{width:100%;height:100%;object-fit:cover;display:block}
-.rd .vtag{position:absolute;top:6px;left:6px;background:rgba(42,35,30,.85);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;letter-spacing:.06em}
-.rd .cell .ct{padding:8px;display:flex;flex-direction:column;gap:6px;font-size:12px}.rd .cell .ct .row{gap:6px}.rd .cell .btn{padding:5px 9px;font-size:12px}
-.rd .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
-.rd .gi{background:#fff;border:1px solid #e6dfd3;border-radius:8px;overflow:hidden;position:relative}.rd .gi img,.rd .gi video{width:100%;height:130px;object-fit:cover;display:block}.rd .gi .ct{padding:8px;font-size:12px;display:flex;flex-direction:column;gap:6px}
-.rd .drop{border:2px dashed #b9a98c;border-radius:10px;padding:26px;text-align:center;background:#fbf9f4;color:#6f6458}.rd .drop.on{background:#f1e8d3;border-color:#a8842f}
-.rd table{width:100%;border-collapse:collapse}.rd th,.rd td{text-align:left;padding:9px 8px;border-bottom:1px solid #eee7da;vertical-align:top}.rd th{font-size:11px;letter-spacing:.08em;color:#7b7167;text-transform:uppercase}
-.rd .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2a231e;color:#fff;padding:11px 18px;border-radius:8px;z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.3)}.rd .toast.err{background:#b3261e}
-.rd .login{max-width:380px;margin:12vh auto;background:#fff;border:1px solid #e6dfd3;border-radius:12px;padding:30px}
-.rd .pill{display:inline-block;background:#efe7d6;border-radius:20px;padding:2px 10px;font-size:12px;margin-left:6px}
-.rd .cbadge{display:inline-block;background:#a8842f;color:#fff;border:0;border-radius:14px;padding:3px 10px;font-size:11px;font-weight:500}
-.rd .prog{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-top:10px}.rd .prog i{display:block;height:100%;background:#a8842f;transition:width .2s}
+.rd .vtag{position:absolute;top:6px;left:6px;background:rgba(42,35,30,.85);color:#fff;font-size:9px;padding:2px 5px;border-radius:4px;letter-spacing:.06em}
+.rd .cell .ct{padding:8px;display:flex;flex-direction:column;gap:6px;font-size:12px}
+.rd .cell .ct .row{gap:4px}
+.rd .cell .btn{padding:5px 8px;font-size:11px}
+.rd .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;width:100%}
+.rd .gi{background:#fff;border:1px solid #e6dfd3;border-radius:8px;overflow:hidden;position:relative}
+.rd .gi img,.rd .gi video{width:100%;height:130px;object-fit:cover;display:block}
+.rd .gi .ct{padding:8px;font-size:12px;display:flex;flex-direction:column;gap:6px}
+.rd .drop{border:2px dashed #b9a98c;border-radius:10px;padding:20px 14px;text-align:center;background:#fbf9f4;color:#6f6458;width:100%}
+.rd .drop.on{background:#f1e8d3;border-color:#a8842f}
+.rd .tbl-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px}
+.rd table{width:100%;min-width:540px;border-collapse:collapse}
+.rd th,.rd td{text-align:left;padding:9px 8px;border-bottom:1px solid #eee7da;vertical-align:middle;font-size:13px}
+.rd th{font-size:11px;letter-spacing:.08em;color:#7b7167;text-transform:uppercase;background:#faf8f4}
+.rd .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#2a231e;color:#fff;padding:10px 16px;border-radius:8px;z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.3);font-size:13px;max-width:90%;text-align:center}
+.rd .toast.err{background:#b3261e}
+.rd .login{max-width:360px;width:calc(100% - 24px);margin:12vh auto;background:#fff;border:1px solid #e6dfd3;border-radius:12px;padding:24px}
+.rd .pill{display:inline-block;background:#efe7d6;border-radius:20px;padding:2px 8px;font-size:11px;margin-left:6px;vertical-align:middle}
+.rd .cbadge{display:inline-block;background:#a8842f;color:#fff;border:0;border-radius:14px;padding:3px 8px;font-size:11px;font-weight:500;white-space:nowrap}
+.rd .prog{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-top:10px;width:100%}
+.rd .prog i{display:block;height:100%;background:#a8842f;transition:width .2s}
 
 /* Live Two-Way Admin Chat Inbox */
-.rd .cinbox{display:grid;grid-template-columns:300px 1fr;border:1px solid #e6dfd3;border-radius:10px;overflow:hidden;background:#fff;min-height:460px}
-.rd .clist{border-right:1px solid #e6dfd3;background:#faf8f4;overflow-y:auto;max-height:560px}
-.rd .citem{padding:13px 14px;border-bottom:1px solid #eee7da;cursor:pointer}
+.rd .cinbox{display:grid;grid-template-columns:260px 1fr;border:1px solid #e6dfd3;border-radius:10px;overflow:hidden;background:#fff;min-height:420px;width:100%}
+.rd .clist{border-right:1px solid #e6dfd3;background:#faf8f4;overflow-y:auto;max-height:520px}
+.rd .citem{padding:11px 12px;border-bottom:1px solid #eee7da;cursor:pointer}
 .rd .citem.on{background:#efe7d6;border-left:3px solid #a8842f}
-.rd .citem small{display:block;color:#7b7167;font-size:12px;margin-top:2px}
-.rd .cview{display:flex;flex-direction:column;height:560px}
-.rd .chead{padding:12px 16px;border-bottom:1px solid #e6dfd3;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;flex-wrap:wrap}
-.rd .lmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.rd .ltag{background:#f3ede2;color:#5c5146;font-size:11px;padding:2px 8px;border-radius:4px}
-.rd .cmsgs{flex:1;overflow-y:auto;padding:16px;background:#f7f4ef;display:flex;flex-direction:column;gap:8px}
-.rd .cm{max-width:76%;padding:9px 12px;border-radius:10px;font-size:13px;line-height:1.4;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.rd .citem small{display:block;color:#7b7167;font-size:11.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rd .cview{display:flex;flex-direction:column;height:520px;background:#fff;min-width:0}
+.rd .chead{padding:10px 14px;border-bottom:1px solid #e6dfd3;display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;flex-wrap:wrap}
+.rd .lmeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.rd .ltag{background:#f3ede2;color:#5c5146;font-size:10.5px;padding:2px 6px;border-radius:4px}
+.rd .cmsgs{flex:1;overflow-y:auto;padding:14px;background:#f7f4ef;display:flex;flex-direction:column;gap:8px}
+.rd .cm{max-width:85%;padding:8px 11px;border-radius:10px;font-size:12.5px;line-height:1.4;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.06);word-break:break-word}
 .rd .cm.bot{background:#efe9dd;color:#4a4037}
 .rd .cm.admin{background:#2a231e;color:#fff;margin-left:auto}
-.rd .cm span{display:block;font-size:10px;opacity:.65;margin-bottom:3px}
-.rd .csend{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #e6dfd3;background:#fff}
+.rd .cm span{display:block;font-size:9.5px;opacity:.65;margin-bottom:3px}
+.rd .csend{display:flex;gap:6px;padding:8px 10px;border-top:1px solid #e6dfd3;background:#fff}
 .rd .csend input{flex:1}
-@media(max-width:760px){.rd .cinbox{grid-template-columns:1fr}.rd .clist{max-height:200px;border-right:0;border-bottom:1px solid #e6dfd3}}
+
+@media(max-width:768px){
+  .rd .bar{padding:10px 12px;gap:8px}
+  .rd .tabs{margin-left:0;width:100%;justify-content:flex-start}
+  .rd .cinbox{grid-template-columns:1fr}
+  .rd .clist{max-height:160px;border-right:0;border-bottom:1px solid #e6dfd3}
+  .rd .cview{height:420px}
+  .rd .slots{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .rd .gal{grid-template-columns:repeat(auto-fill,minmax(135px,1fr))}
+}
 `;
 
 async function shrink(file, max = 2000, q = 0.86) {
@@ -77,7 +105,6 @@ export default function RKDashboard({ siteUrl = "/" }) {
   const [fRoom, setFRoom] = useState("All"); const [fProj, setFProj] = useState("All"); const [drag, setDrag] = useState(false);
   const [newRoom, setNewRoom] = useState(""); const [newGroup, setNewGroup] = useState(""); const [newProj, setNewProj] = useState("");
 
-  /* Dynamic Chat Q&A Form States */
   const [faqQ, setFaqQ] = useState("");
   const [faqKw, setFaqKw] = useState("");
   const [faqAns, setFaqAns] = useState("");
@@ -121,9 +148,8 @@ export default function RKDashboard({ siteUrl = "/" }) {
   };
 
   useEffect(() => { if (token) reload().catch(() => logout()); }, [token, reload]);
-  useEffect(() => { if (data) { if (!room && data.rooms[0]) setRoom(data.rooms[0].name); if (!project && data.projects[0]) setProject(data.projects[0].id); } }, [data]);
+  useEffect(() => { if (data) { if (!room && data.rooms[0]) setRoom(data.rooms[0].name); if (!project && data.projects[0]) setProject(data.projects[0].id); } }, [data, room, project]);
 
-  /* Real-time WebSocket + Auto-Refresh for Admin Live Chat */
   useEffect(() => {
     if (!token || (tab !== "chat" && tab !== "leads")) return;
     let ws;
@@ -235,12 +261,12 @@ export default function RKDashboard({ siteUrl = "/" }) {
 
   if (!token) return (
     <div className="rd"><style>{CSS}</style><form className="login" onSubmit={login}>
-      <h1 style={{ fontSize: 24 }}>RK Interior Studio</h1><p className="sub">Admin dashboard — enter your admin token</p>
+      <h1 style={{ fontSize: 22, marginBottom: 4 }}>RK Interior Studio</h1><p className="sub">Admin dashboard — enter your admin token</p>
       <input type="password" placeholder="ADMIN_TOKEN" value={pw} onChange={e => setPw(e.target.value)} style={{ width: "100%", marginBottom: 12 }} autoFocus />
       <button className="btn gold" style={{ width: "100%" }} disabled={!pw}>Sign in</button>
     </form>{toast && <div className={"toast" + (toast.err ? " err" : "")}>{toast.msg}</div>}</div>
   );
-  if (!data) return <div className="rd"><style>{CSS}</style><p style={{ padding: 40 }}>Loading from D1 SQL…</p>{toast && <div className="toast err">{toast.msg}</div>}</div>;
+  if (!data) return <div className="rd"><style>{CSS}</style><p style={{ padding: 40, textAlign: "center" }}>Loading from D1 SQL…</p>{toast && <div className="toast err">{toast.msg}</div>}</div>;
 
   const slotImg = (k, i) => data.images.find(x => x.slot === k && x.idx === i);
   const gallery = data.images.filter(x => !x.slot);
@@ -248,11 +274,9 @@ export default function RKDashboard({ siteUrl = "/" }) {
   const groups = [...new Set(data.rooms.map(r => r.group))];
   const chatFaqs = data.chatFaqs || [];
 
-  // Map normalized 10-digit phone numbers to unify Leads & Chat Threads
   const threadByPhone = Object.fromEntries(threads.map(t => [normPhone(t.phone), t]));
   const leadByPhone = Object.fromEntries(leads.map(l => [normPhone(l.phone), l]));
 
-  // Deduplicate leads list in UI if legacy rows share a phone number
   const unifiedLeads = Object.values(
     leads.reduce((acc, l) => {
       const p = normPhone(l.phone) || String(l.id);
@@ -278,8 +302,8 @@ export default function RKDashboard({ siteUrl = "/" }) {
   return (
     <div className="rd"><style>{CSS}</style>
       <div className="bar"><h1>RK ADMIN</h1>
-        <div className="tabs">{[["slots", "Site Media & Videos"], ["gallery", "Gallery"], ["cats", "Categories"], ["leads", `Leads (${unifiedLeads.length})`], ["chat", `Live Chat (${threads.length})`]].map(([k, l]) => <button key={k} className={"tab" + (tab === k ? " on" : "")} onClick={() => setTab(k)}>{l}</button>)}</div>
-        <span className="sp" /><a href={siteUrl} target="_blank" rel="noreferrer">View site ↗</a><button className="lo" onClick={logout}>Sign out</button></div>
+        <div className="tabs">{[["slots", "Site Media"], ["gallery", "Gallery"], ["cats", "Categories"], ["leads", `Leads (${unifiedLeads.length})`], ["chat", `Live Chat (${threads.length})`]].map(([k, l]) => <button key={k} className={"tab" + (tab === k ? " on" : "")} onClick={() => setTab(k)}>{l}</button>)}</div>
+        <span style={{ flex: 1 }} /><a href={siteUrl} target="_blank" rel="noreferrer">View site ↗</a><button className="lo" onClick={logout}>Sign out</button></div>
       <div className="wrap">
 
         {tab === "slots" && <>
@@ -288,7 +312,7 @@ export default function RKDashboard({ siteUrl = "/" }) {
             const allowVideo = s.key === "hero";
             return (
               <div className="card" key={s.key}>
-                <h3>{s.key === "hero" ? "Top Hero Banner (Image or Video)" : s.label}<span className="pill">{data.images.filter(x => x.slot === s.key).length}/{s.count}</span></h3>
+                <h3 style={{ fontSize: 17 }}>{s.key === "hero" ? "Top Hero Banner (Image or Video)" : s.label}<span className="pill">{data.images.filter(x => x.slot === s.key).length}/{s.count}</span></h3>
                 <p className="sub">{allowVideo ? "Upload MP4 / WebM / MOV videos or wide 16:9 images for the top hero banner." : s.hint}</p>
                 <div className="slots">{Array.from({ length: s.count }, (_, i) => {
                   const im = slotImg(s.key, i);
@@ -300,7 +324,7 @@ export default function RKDashboard({ siteUrl = "/" }) {
                         {!im && `${allowVideo ? "Slide / Video" : s.key} #${i + 1} – empty`}
                       </div>
                       <div className="ct"><b>#{i + 1} {video ? "(Video)" : ""}</b><div className="row">
-                        <label className="btn gold" style={{ cursor: "pointer", padding: "5px 9px", fontSize: 12 }}>
+                        <label className="btn gold" style={{ cursor: "pointer", padding: "5px 8px", fontSize: 11, textAlign: "center", flex: 1 }}>
                           {im ? "Replace" : (allowVideo ? "Upload Media" : "Upload")}
                           <input type="file" accept={allowVideo ? "image/*,video/mp4,video/webm,video/quicktime" : "image/*"} hidden disabled={busy} onChange={e => { uploadSlot(s.key, i, e.target.files[0]); e.target.value = ""; }} />
                         </label>
@@ -317,18 +341,21 @@ export default function RKDashboard({ siteUrl = "/" }) {
         {tab === "gallery" && <>
           <div className="card"><h3>Upload designs & walkthrough videos</h3><p className="sub">Choose a room category and project, then drop images or walkthrough videos (MP4/WebM).</p>
             <div className="row" style={{ marginBottom: 12 }}>
-              <select value={room} onChange={e => setRoom(e.target.value)}>{data.rooms.map(r => <option key={r.name}>{r.name}</option>)}</select>
-              <select value={project} onChange={e => setProject(e.target.value)}>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-              <input type="text" placeholder="Title (optional)" value={title} onChange={e => setTitle(e.target.value)} />
-              <label style={{ fontSize: 13 }}><input type="checkbox" checked={optimize} onChange={e => setOptimize(e.target.checked)} /> Optimise images (max 2000px, WebP)</label></div>
+              <select value={room} onChange={e => setRoom(e.target.value)} style={{ flex: 1, minWidth: 130 }}>{data.rooms.map(r => <option key={r.name}>{r.name}</option>)}</select>
+              <select value={project} onChange={e => setProject(e.target.value)} style={{ flex: 1, minWidth: 130 }}>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+              <input type="text" placeholder="Title (optional)" value={title} onChange={e => setTitle(e.target.value)} style={{ flex: 2, minWidth: 160 }} />
+            </div>
+            <div className="row" style={{ marginBottom: 12 }}>
+              <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}><input type="checkbox" checked={optimize} onChange={e => setOptimize(e.target.checked)} /> Optimise images (max 2000px, WebP)</label>
+            </div>
             <div className={"drop" + (drag ? " on" : "")} onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false); uploadMany(e.dataTransfer.files); }}>
               <p style={{ margin: "0 0 10px" }}>Drag & drop images or videos here</p>
               <button className="btn gold" disabled={busy} onClick={() => fileRef.current.click()}>Choose files</button>
               <input ref={fileRef} type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple hidden onChange={e => { uploadMany(e.target.files); e.target.value = ""; }} />
               {prog && <><p style={{ margin: "12px 0 0" }}>Uploading {prog.i} / {prog.n}…</p><div className="prog"><i style={{ width: (prog.i / prog.n * 100) + "%" }} /></div></>}</div></div>
-          <div className="card"><div className="row" style={{ marginBottom: 14 }}><h3>Gallery media<span className="pill">{shown.length}</span></h3><span className="sp" style={{ flex: 1 }} />
-            <select value={fRoom} onChange={e => setFRoom(e.target.value)}><option>All</option>{data.rooms.map(r => <option key={r.name}>{r.name}</option>)}</select>
-            <select value={fProj} onChange={e => setFProj(e.target.value)}><option value="All">All projects</option>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div className="card"><div className="row" style={{ marginBottom: 14 }}><h3 style={{ fontSize: 17 }}>Gallery media<span className="pill">{shown.length}</span></h3><span style={{ flex: 1 }} />
+            <select value={fRoom} onChange={e => setFRoom(e.target.value)} style={{ width: "auto" }}><option>All</option>{data.rooms.map(r => <option key={r.name}>{r.name}</option>)}</select>
+            <select value={fProj} onChange={e => setFProj(e.target.value)} style={{ width: "auto" }}><option value="All">All projects</option>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
             {shown.length === 0 ? <p className="sub">No media yet.</p> : <div className="gal">{shown.map(g => {
               const video = isVid(g);
               return (
@@ -345,22 +372,22 @@ export default function RKDashboard({ siteUrl = "/" }) {
 
         {tab === "cats" && <>
           <div className="card"><h3>Room categories<span className="pill">{data.rooms.length}</span></h3><p className="sub">Stored in the SQL `rooms` table.</p>
-            <table><thead><tr><th>Name</th><th>Menu group</th><th>Items</th><th /></tr></thead><tbody>{data.rooms.map(r => (
+            <div className="tbl-wrap"><table><thead><tr><th>Name</th><th>Menu group</th><th>Items</th><th /></tr></thead><tbody>{data.rooms.map(r => (
               <tr key={r.name}><td>{r.name}</td><td><select value={r.group} onChange={e => apiFetch(`/api/rooms/${encodeURIComponent(r.name)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ group: e.target.value }) }).then(() => reload())}>{groups.map(g => <option key={g}>{g}</option>)}</select></td>
                 <td>{gallery.filter(g => g.room === r.name).length}</td><td><button className="btn red" onClick={() => {
                   if (confirm(`Delete “${r.name}”?`)) apiFetch(`/api/rooms/${encodeURIComponent(r.name)}`, { method: "DELETE" }).then(() => { reload(); say("Deleted"); }).catch(e => say(e.message, true));
-                }}>Delete</button></td></tr>))}</tbody></table>
-            <div className="row" style={{ marginTop: 14 }}><input type="text" placeholder="New category (e.g. Balcony)" value={newRoom} onChange={e => setNewRoom(e.target.value)} />
-              <input type="text" list="grp" placeholder="Menu group" value={newGroup} onChange={e => setNewGroup(e.target.value)} /><datalist id="grp">{groups.map(g => <option key={g} value={g} />)}</datalist>
+                }}>Delete</button></td></tr>))}</tbody></table></div>
+            <div className="row" style={{ marginTop: 14 }}><input type="text" placeholder="New category (e.g. Balcony)" value={newRoom} onChange={e => setNewRoom(e.target.value)} style={{ flex: 2, minWidth: 140 }} />
+              <input type="text" list="grp" placeholder="Menu group" value={newGroup} onChange={e => setNewGroup(e.target.value)} style={{ flex: 2, minWidth: 140 }} /><datalist id="grp">{groups.map(g => <option key={g} value={g} />)}</datalist>
               <button className="btn gold" disabled={!newRoom.trim()} onClick={() => {
                 apiFetch("/api/rooms", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newRoom.trim(), group: newGroup.trim() || "Other" }) }).then(() => { setNewRoom(""); reload(); say("Category added"); }).catch(e => say(e.message, true));
               }}>Add category</button></div></div>
           <div className="card"><h3>Projects<span className="pill">{data.projects.length}</span></h3><p className="sub">Stored in the SQL `projects` table.</p>
-            <table><thead><tr><th>Name</th><th>Items</th><th /></tr></thead><tbody>{data.projects.map(p => (
+            <div className="tbl-wrap"><table><thead><tr><th>Name</th><th>Items</th><th /></tr></thead><tbody>{data.projects.map(p => (
               <tr key={p.id}><td>{p.name}</td><td>{gallery.filter(g => g.project === p.id).length}</td><td><button className="btn red" onClick={() => {
                 if (confirm(`Delete “${p.name}”?`)) apiFetch(`/api/projects/${encodeURIComponent(p.id)}`, { method: "DELETE" }).then(() => { reload(); say("Deleted"); }).catch(e => say(e.message, true));
-              }}>Delete</button></td></tr>))}</tbody></table>
-            <div className="row" style={{ marginTop: 14 }}><input type="text" placeholder="New project name" value={newProj} onChange={e => setNewProj(e.target.value)} />
+              }}>Delete</button></td></tr>))}</tbody></table></div>
+            <div className="row" style={{ marginTop: 14 }}><input type="text" placeholder="New project name" value={newProj} onChange={e => setNewProj(e.target.value)} style={{ flex: 3, minWidth: 160 }} />
               <button className="btn gold" disabled={!newProj.trim()} onClick={() => {
                 const name = newProj.trim();
                 let id = slug(name); while (data.projects.some(p => p.id === id)) id += Math.floor(Math.random() * 10);
@@ -368,7 +395,7 @@ export default function RKDashboard({ siteUrl = "/" }) {
               }}>Add project</button></div></div></>}
 
         {tab === "leads" && <div className="card"><h3>Unified Customer Leads<span className="pill">{unifiedLeads.length}</span></h3><p className="sub">Form submissions and Live Chat enquiries with the same mobile number are automatically combined.</p>
-          {unifiedLeads.length === 0 ? <p className="sub">No enquiries yet.</p> : <table><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Email</th><th>Location</th><th>Service</th><th>Chat</th><th /></tr></thead><tbody>
+          {unifiedLeads.length === 0 ? <p className="sub">No enquiries yet.</p> : <div className="tbl-wrap"><table><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Email</th><th>Location</th><th>Service</th><th>Chat</th><th /></tr></thead><tbody>
             {unifiedLeads.map(l => {
               const linkedChat = threadByPhone[normPhone(l.phone)];
               return (
@@ -390,13 +417,13 @@ export default function RKDashboard({ siteUrl = "/" }) {
                 </tr>
               );
             })}
-          </tbody></table>}</div>}
+          </tbody></table></div>}</div>}
 
         {tab === "chat" && <>
           <div className="card">
             <div className="row" style={{ marginBottom: 12 }}>
-              <h3>Visitor Live Chat Conversations<span className="pill">{threads.length}</span></h3>
-              <span className="sp" style={{ flex: 1 }} />
+              <h3 style={{ fontSize: 17 }}>Visitor Live Chat Conversations<span className="pill">{threads.length}</span></h3>
+              <span style={{ flex: 1 }} />
               <button className="btn alt" style={{ padding: "6px 12px", fontSize: 12 }} onClick={() => reload()}>Refresh</button>
             </div>
             <p className="sub">Combined with customer form details by mobile number. Click a visitor below to view their full history and reply live.</p>
@@ -422,7 +449,7 @@ export default function RKDashboard({ siteUrl = "/" }) {
                   <div className="cview">
                     <div className="chead">
                       <div>
-                        <b>{activeLead?.name || activeThread.name}</b> · <a href={`tel:${activeThread.phone}`}>{activeThread.phone}</a>
+                        <b style={{ fontSize: 13.5 }}>{activeLead?.name || activeThread.name}</b> · <a href={`tel:${activeThread.phone}`} style={{ fontSize: 13 }}>{activeThread.phone}</a>
                         {activeLead && (activeLead.email || (activeLead.location && activeLead.location !== "Live Chat") || (activeLead.service && activeLead.service !== "Chat Enquiry")) && (
                           <div className="lmeta">
                             {activeLead.email && <span className="ltag">✉️ {activeLead.email}</span>}
@@ -431,7 +458,7 @@ export default function RKDashboard({ siteUrl = "/" }) {
                           </div>
                         )}
                       </div>
-                      <button className="btn red" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => {
+                      <button className="btn red" style={{ padding: "4px 8px", fontSize: 11 }} onClick={() => {
                         if (confirm(`Delete chat with ${activeLead?.name || activeThread.name}?`)) apiFetch(`/api/chat-threads/${encodeURIComponent(activeThread.session_id)}`, { method: "DELETE" }).then(() => reload());
                       }}>Delete Thread</button>
                     </div>
@@ -445,8 +472,8 @@ export default function RKDashboard({ siteUrl = "/" }) {
                       ))}
                     </div>
                     <form className="csend" onSubmit={sendAdminReply}>
-                      <input type="text" placeholder={`Reply directly to ${activeLead?.name || activeThread.name}...`} value={replyText} onChange={e => setReplyText(e.target.value)} />
-                      <button type="submit" className="btn gold">Send Reply</button>
+                      <input type="text" placeholder={`Reply to ${activeLead?.name || activeThread.name}...`} value={replyText} onChange={e => setReplyText(e.target.value)} />
+                      <button type="submit" className="btn gold">Send</button>
                     </form>
                   </div>
                 )}
@@ -457,10 +484,10 @@ export default function RKDashboard({ siteUrl = "/" }) {
           <div className="card">
             <h3>Quick-Tap Auto-Answer Q&As<span className="pill">{chatFaqs.length}</span></h3>
             <p className="sub">Optional instant-answer buttons shown inside the visitor chat bubble.</p>
-            <form onSubmit={saveFaq} style={{ display: "grid", gap: 10, marginBottom: 18 }}>
+            <form onSubmit={saveFaq} style={{ display: "grid", gap: 8, marginBottom: 16 }}>
               <div className="row">
-                <input type="text" placeholder="Question button label" value={faqQ} onChange={e => setFaqQ(e.target.value)} style={{ flex: 2 }} />
-                <input type="text" placeholder="Match keywords (comma-separated)" value={faqKw} onChange={e => setFaqKw(e.target.value)} style={{ flex: 2 }} />
+                <input type="text" placeholder="Question button label" value={faqQ} onChange={e => setFaqQ(e.target.value)} style={{ flex: 2, minWidth: 140 }} />
+                <input type="text" placeholder="Keywords (comma-separated)" value={faqKw} onChange={e => setFaqKw(e.target.value)} style={{ flex: 2, minWidth: 140 }} />
               </div>
               <textarea rows={2} placeholder="Auto-answer..." value={faqAns} onChange={e => setFaqAns(e.target.value)} style={{ width: "100%" }} />
               <div className="row">
@@ -468,7 +495,7 @@ export default function RKDashboard({ siteUrl = "/" }) {
                 {editFaq && <button type="button" className="btn alt" onClick={() => { setEditFaq(null); setFaqQ(""); setFaqKw(""); setFaqAns(""); }}>Cancel</button>}
               </div>
             </form>
-            <table>
+            <div className="tbl-wrap"><table>
               <thead><tr><th>Quick Question</th><th>Keywords</th><th>Auto-Answer</th><th /></tr></thead>
               <tbody>
                 {chatFaqs.map(f => (
@@ -477,13 +504,13 @@ export default function RKDashboard({ siteUrl = "/" }) {
                     <td style={{ color: "#7b7167", fontSize: 12 }}>{f.keywords}</td>
                     <td>{f.answer}</td>
                     <td style={{ whiteSpace: "nowrap" }}>
-                      <button className="btn alt" style={{ padding: "4px 8px", fontSize: 11, marginRight: 6 }} onClick={() => { setEditFaq(f); setFaqQ(f.question); setFaqKw(f.keywords); setFaqAns(f.answer); }}>Edit</button>
+                      <button className="btn alt" style={{ padding: "4px 8px", fontSize: 11, marginRight: 4 }} onClick={() => { setEditFaq(f); setFaqQ(f.question); setFaqKw(f.keywords); setFaqAns(f.answer); }}>Edit</button>
                       <button className="btn red" style={{ padding: "4px 8px", fontSize: 11 }} onClick={() => apiFetch(`/api/chat-faqs/${f.id}`, { method: "DELETE" }).then(() => { reload(); say("Deleted"); })}>Delete</button>
                     </td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
         </>}
       </div>

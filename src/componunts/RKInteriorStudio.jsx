@@ -18,8 +18,10 @@ const CSS = `
 .sec h2{font-size:30px;margin-bottom:6px}.sub{color:var(--mut);margin-bottom:24px}
 .ann{background:var(--ink);color:#fff;text-align:center;font-size:11px;letter-spacing:.06em;padding:8px 12px;text-transform:uppercase;position:relative;z-index:50}.ann a{text-decoration:underline}
 
-/* Header & Desktop Navigation */
-.hd{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line)}
+/* Smart Hide/Show Header on Scroll */
+.hd{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);transition:transform 0.3s ease, opacity 0.3s ease}
+.hd.hidden{transform:translateY(-100%);opacity:0;pointer-events:none}
+
 .hd1{display:flex;align-items:center;gap:28px;padding:14px 20px;max-width:1180px;margin:0 auto;position:relative}
 .logo{font-size:22px;letter-spacing:.22em;font-weight:600;cursor:pointer}.top a{margin-right:18px;font-size:15px}.top a.on{color:var(--acc)}
 .srch{flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#efebe4;border-radius:6px;padding:9px 12px}
@@ -62,7 +64,7 @@ const CSS = `
 .cityg{display:grid;grid-template-columns:260px 1fr;gap:34px;width:100%}.chip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 18px;font-size:13px}.chip.on{background:var(--ink);color:#fff}
 .cbtn{border:1px solid var(--line);background:#f7f4ef;padding:9px 12px;border-radius:4px;text-align:left;font-size:13px}.cbtn:hover{border-color:var(--acc)}
 .alpha span{margin-right:12px;font-size:12px;cursor:pointer}.alpha .on{color:var(--acc);font-weight:600}
-.hero{position:relative;height:min(78vh,640px);overflow:hidden;background:#000}.slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1s;pointer-events:none}.slide.on{opacity:1}
+.hero{position:relative;height:min(78vh,640px);overflow:hidden;background:#000;touch-action:pan-y}.slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1s;pointer-events:none}.slide.on{opacity:1}
 .slide video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .slide:after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.32);z-index:1}.hc{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 20px 70px;color:#fff;text-align:center}
 .hc h1{font-size:clamp(28px,5vw,54px);line-height:1.15;color:#fff}.hc h1 em{color:#fff}.btnw{margin-top:22px;background:#fff;color:var(--ink);border:0;padding:12px 26px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
@@ -270,7 +272,14 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   const [roomF, setRoomF] = useState("All"); const [projF, setProjF] = useState("All"); const [vis, setVis] = useState(12);
   const [stick, setStick] = useState(false); const [q, setQ] = useState(""); const offered = useRef(false);
 
-  /* Conversational Chat State (auto-populated if user submits any form, or asked in chat bubbles) */
+  /* Smart Hide/Show Header on Scroll state */
+  const [showHd, setShowHd] = useState(true);
+  const lastScrollY = useRef(0);
+
+  /* Touch swipe state for Hero */
+  const touchStartX = useRef(0);
+
+  /* Conversational Chat State */
   const [chatUser, setChatUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem("rk_chat_user") || "null"); } catch { return null; }
   });
@@ -286,6 +295,19 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   const [mSub, setMSub] = useState(null);
   const [mTab, setMTab] = useState(0);
   const [mSearchOpen, setMSearchOpen] = useState(false);
+
+  /* Browser popstate sync for back/forward buttons */
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (e.state) {
+        setPage(e.state.page || "home");
+        setRoomF(e.state.roomF || "All");
+        setProjF(e.state.projF || "All");
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     if (initialData) return;
@@ -304,6 +326,21 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     if (chatBodyRef.current) chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
   }, [msgs, introMsgs, chat, chatUser]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 120) {
+        setShowHd(false);
+      } else {
+        setShowHd(true);
+      }
+      lastScrollY.current = currentScrollY;
+      setStick(currentScrollY > 500);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const fetchChatMessages = useCallback(async (sid) => {
     if (!sid) return;
     const r = await fetch(`${API}/api/chat/messages?sessionId=${encodeURIComponent(sid)}&t=${Date.now()}`, { cache: "no-store" });
@@ -313,12 +350,10 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     }
   }, [API]);
 
-  /* Register or sync a chat session in D1 SQL (shared by both Form submissions and Chat onboarding) */
   const connectChatSession = useCallback(async (name, phone, initialNote = null) => {
     const digits = String(phone || "").replace(/\D/g, "").slice(-10);
     if (name.trim().length < 2 || !/^[6-9]\d{9}$/.test(digits)) return null;
 
-    // If a different user or phone is entered, start a fresh session ID so old chat history doesn't mix
     const reuseSid = chatUser && chatUser.phone === digits ? chatUser.sessionId : null;
     const sid = reuseSid || ("chat_" + Math.random().toString(36).slice(2, 10));
     const welcomeText = `Thanks ${name.trim()}! You're connected with our studio. Tap a quick question below or type any question about your home interiors.`;
@@ -354,7 +389,6 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     }
   }, [API, chatUser, fetchChatMessages]);
 
-  /* Reset chat session so a new user or fresh conversation can start cleanly */
   const resetChat = () => {
     try { localStorage.removeItem("rk_chat_user"); } catch {}
     setChatUser(null);
@@ -364,7 +398,6 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     setCi("");
   };
 
-  /* Live WebSocket + Polling Fallback once chat session is active */
   useEffect(() => {
     if (!chat || !chatUser?.sessionId) return;
     const sid = chatUser.sessionId;
@@ -409,10 +442,10 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   const IMG = new Proxy(IMGB, { get: (t, k) => t[k] ?? byId[k] });
   const activeHeroItem = slItem("hero", slide);
   const activeHeroIsVideo = activeHeroItem && (activeHeroItem.mediaType === "video" || isVidUrl(activeHeroItem.key));
+  
   useEffect(() => { if (hov || page !== "home" || activeHeroIsVideo) return; const i = setInterval(() => setSlide(s => (s + 1) % 4), 5000); return () => clearInterval(i); }, [hov, page, activeHeroIsVideo]);
   useEffect(() => { const i = setInterval(() => setAnn(a => (a + 1) % 2), 4000); return () => clearInterval(i); }, []);
   useEffect(() => { const t = setTimeout(() => { if (!offered.current) { offered.current = true; setModal({ k: "offer" }); } }, 12000); return () => clearTimeout(t); }, []);
-  useEffect(() => { const f = () => setStick(window.scrollY > 500); window.addEventListener("scroll", f); return () => window.removeEventListener("scroll", f); }, []);
 
   const list = G.filter(g => (roomF === "All" || g[1] === roomF) && (projF === "All" || g[0] === projF));
 
@@ -423,11 +456,22 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   }, [modal && modal.k]);
 
   const closeMobile = () => { setMOpen(false); setMSub(null); setMTab(0); };
-  const go = (p, room, proj) => { setPage(p); setMenu(null); closeMobile(); if (p === "gallery") { setRoomF(room || "All"); setProjF(proj || "All"); setVis(12); } window.scrollTo({ top: 0 }); };
+  
+  /* Navigate with Browser History State & Scroll Restoration */
+  const go = (p, room, proj) => { 
+    const r = room || "All";
+    const pr = proj || "All";
+    window.history.pushState({ page: p, roomF: r, projF: pr }, "");
+    setPage(p); 
+    setMenu(null); 
+    closeMobile(); 
+    if (p === "gallery") { setRoomF(r); setProjF(pr); setVis(12); } 
+    window.scrollTo({ top: 0, behavior: "smooth" }); 
+  };
+  
   const quote = () => { closeMobile(); setModal({ k: "lead" }); };
   const open = (l, i) => setModal({ k: "lb", list: l, i });
 
-  /* Match dynamic FAQ keyword from SQL */
   const chatFaqs = D.chatFaqs || [];
   const findAutoReply = t => {
     const low = t.toLowerCase();
@@ -438,13 +482,11 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     return matched ? matched.answer : null;
   };
 
-  /* Handle conversational chat steps: 1) Name -> 2) Phone -> 3) Live Q&A + Admin Chat */
   const askChat = async (text, presetAnswer = null) => {
     const clean = text.trim();
     if (!clean) return;
     setCi("");
 
-    // Step 1: Collect Name in chat bubble
     if (!chatUser && !pendingName) {
       if (clean.length < 2) {
         setIntroMsgs(m => [
@@ -463,7 +505,6 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
       return;
     }
 
-    // Step 2: Collect Phone Number in chat bubble & register session in D1 SQL
     if (!chatUser && pendingName) {
       const digits = clean.replace(/\D/g, "").slice(-10);
       if (!/^[6-9]\d{9}$/.test(digits)) {
@@ -479,7 +520,6 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
       return;
     }
 
-    // Step 3: Active Live Chat & Quick FAQ Answers
     const autoReply = presetAnswer !== null ? presetAnswer : findAutoReply(clean);
     setMsgs(m => [
       ...m,
@@ -585,7 +625,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
                     ["Design Ideas", () => { setMSub("Design Ideas"); setMTab(0); }],
                     ["Price Calculators", () => { setMSub("Price Calculators"); setMTab(0); }],
                     ["About Us", () => go("about")],
-                    ["Latest Work", () => { go("home"); setTimeout(() => document.getElementById("latest")?.scrollIntoView({ behavior: "smooth" }), 100); }],
+                    ["Latest Work", () => { go("home"); setTimeout(() => document.getElementById("latest")?.scrollIntoView({ behavior: "smooth" }), 80); }],
                     ["More", () => { setMSub("More"); setMTab(0); }]
                   ].map(([lbl, fn]) => (
                     <div key={lbl} className="md-row" onClick={fn}>
@@ -651,7 +691,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   const Top = (
     <>
       <div className="ann">{ann === 0 ? <>Elevate your space with us · <a onClick={quote}>Get free consultation →</a></> : <>{B.branches} · <a href={tel(B.phones[0])}>Call {B.phones[0]}</a></>}</div>
-      <div className="hd" onMouseLeave={() => setMenu(null)}>
+      <div className={"hd" + (showHd ? "" : " hidden")} onMouseLeave={() => setMenu(null)}>
         <div className="hd1">
           <div className="m-left">
             <button className="ibtn" onClick={() => { setMOpen(true); setMSub(null); }} aria-label="Open menu">{Ico.menu}</button>
@@ -705,7 +745,19 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
 
   const Home = (
     <>
-      <div className="hero" onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      <div 
+        className="hero" 
+        onMouseEnter={() => setHov(true)} 
+        onMouseLeave={() => setHov(false)}
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+        onTouchEnd={e => {
+          const diff = e.changedTouches[0].clientX - touchStartX.current;
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) setSlide(s => (s + 3) % 4); // Swipe Right -> Prev
+            else setSlide(s => (s + 1) % 4); // Swipe Left -> Next
+          }
+        }}
+      >
         {SLIDES.map((s, i) => {
           const item = slItem("hero", i);
           const src = IMG[s[3]];
@@ -757,7 +809,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
           })}</div>
           {vis < list.length && <div style={{ textAlign: "center", margin: "30px 0" }}><button className="btn2 d" onClick={() => setVis(vis + 12)}>Load more ({list.length - vis} left)</button></div>}</>}
       </div></div>
-      <div className="sec"><div className="wrap"><div style={{ background: "#fff", padding: 26, borderRadius: 6 }}><h2 style={{ fontSize: 28 }}>What are you looking for?</h2><div style={{ marginTop: 14 }}>{ROOMS.map(r => <span className="tag" key={r} onClick={() => { setRoomF(r); setVis(12); window.scrollTo({ top: 0 }); }}>{r}</span>)}</div></div></div></div>
+      <div className="sec"><div className="wrap"><div style={{ background: "#fff", padding: 26, borderRadius: 6 }}><h2 style={{ fontSize: 28 }}>What are you looking for?</h2><div style={{ marginTop: 14 }}>{ROOMS.map(r => <span className="tag" key={r} onClick={() => { setRoomF(r); setVis(12); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{r}</span>)}</div></div></div></div>
       <div className="sec"><div className="wrap abt" style={{ background: "#efebe4", borderRadius: 8, overflow: "hidden", padding: 0, gap: 0 }}><Pic src={IMG.b_dining} alt="" style={{ height: "100%", minHeight: 420, objectFit: "cover" }} /><div style={{ padding: 28 }}><h3 className="serif" style={{ fontSize: 28 }}>Designs for every home</h3><p className="sub">Get your dream home today. Let our experts help you.</p><LeadForm title="Get a |free consultation|" cta="Get Free Consultation" api={API} onLeadSaved={connectChatSession} /></div></div></div>
     </>
   );
