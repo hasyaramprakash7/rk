@@ -297,11 +297,16 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   const [mTab, setMTab] = useState(0);
   const [mSearchOpen, setMSearchOpen] = useState(false);
 
-  /* Browser history popstate & modal history sync */
+  /* Browser history popstate sync for back/forward buttons & modals/menus */
   useEffect(() => {
     const handlePopState = (e) => {
       if (modal) {
         setModal(null);
+        return;
+      }
+      if (mOpen) {
+        setMOpen(false);
+        setMSub(null);
         return;
       }
       if (e.state) {
@@ -312,7 +317,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [modal]);
+  }, [modal, mOpen]);
 
   useEffect(() => {
     if (initialData) return;
@@ -451,17 +456,30 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   
   useEffect(() => { if (hov || page !== "home" || activeHeroIsVideo) return; const i = setInterval(() => setSlide(s => (s + 1) % 4), 5000); return () => clearInterval(i); }, [hov, page, activeHeroIsVideo]);
   useEffect(() => { const i = setInterval(() => setAnn(a => (a + 1) % 2), 4000); return () => clearInterval(i); }, []);
-  useEffect(() => { const t = setTimeout(() => { if (!offered.current) { offered.current = true; setModal({ k: "offer" }); } }, 12000); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(() => { if (!offered.current) { offered.current = true; window.history.pushState({ modal: "offer" }, ""); setModal({ k: "offer" }); } }, 12000); return () => clearTimeout(t); }, []);
 
   const list = G.filter(g => (roomF === "All" || g[1] === roomF) && (projF === "All" || g[0] === projF));
 
   useEffect(() => {
     if (!modal || modal.k !== "lb") return;
-    const f = e => { if (e.key === "Escape") setModal(null); if (e.key === "ArrowRight") setModal(m => ({ ...m, i: (m.i + 1) % m.list.length })); if (e.key === "ArrowLeft") setModal(m => ({ ...m, i: (m.i + m.list.length - 1) % m.list.length })); };
+    const f = e => { if (e.key === "Escape") { window.history.back(); setModal(null); } if (e.key === "ArrowRight") setModal(m => ({ ...m, i: (m.i + 1) % m.list.length })); if (e.key === "ArrowLeft") setModal(m => ({ ...m, i: (m.i + m.list.length - 1) % m.list.length })); };
     window.addEventListener("keydown", f); return () => window.removeEventListener("keydown", f);
   }, [modal && modal.k]);
 
-  const closeMobile = () => { setMOpen(false); setMSub(null); setMTab(0); };
+  const closeMobile = () => { 
+    if (mOpen) {
+      window.history.back();
+    }
+    setMOpen(false); 
+    setMSub(null); 
+    setMTab(0); 
+  };
+
+  const openMobileMenu = () => {
+    window.history.pushState({ menu: true }, "");
+    setMOpen(true);
+    setMSub(null);
+  };
   
   const go = (p, room, proj) => { 
     const r = room || "All";
@@ -474,7 +492,18 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     window.scrollTo({ top: 0, behavior: "smooth" }); 
   };
   
-  const quote = () => { closeMobile(); setModal({ k: "lead" }); };
+  const quote = () => { 
+    closeMobile(); 
+    window.history.pushState({ modal: "lead" }, "");
+    setModal({ k: "lead" }); 
+  };
+
+  const closeModal = () => {
+    if (modal) {
+      window.history.back();
+      setModal(null);
+    }
+  };
   
   const open = (l, i) => {
     window.history.pushState({ modal: "lb" }, "");
@@ -579,13 +608,13 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
         {
           label: "Estimators",
           items: [
-            { label: "Full Home Price Estimator", onClick: () => { closeMobile(); setModal({ k: "calc", t: "Full Home" }); } },
-            { label: "Modular Kitchen Estimator", onClick: () => { closeMobile(); setModal({ k: "calc", t: "Kitchen" }); } },
-            { label: "Wardrobe Price Estimator", onClick: () => { closeMobile(); setModal({ k: "calc", t: "Wardrobe" }); } }
+            { label: "Full Home Price Estimator", onClick: () => { closeMobile(); window.history.pushState({ modal: "calc" }, ""); setModal({ k: "calc", t: "Full Home" }); } },
+            { label: "Modular Kitchen Estimator", onClick: () => { closeMobile(); window.history.pushState({ modal: "calc" }, ""); setModal({ k: "calc", t: "Kitchen" }); } },
+            { label: "Wardrobe Price Estimator", onClick: () => { closeMobile(); window.history.pushState({ modal: "calc" }, ""); setModal({ k: "calc", t: "Wardrobe" }); } }
           ]
         }
       ],
-      cta: { label: "CALCULATE FULL HOME COST", onClick: () => { closeMobile(); setModal({ k: "calc", t: "Full Home" }); } }
+      cta: { label: "CALCULATE FULL HOME COST", onClick: () => { closeMobile(); window.history.pushState({ modal: "calc" }, ""); setModal({ k: "calc", t: "Full Home" }); } }
     },
     "More": {
       tabs: [
@@ -703,7 +732,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
       <div className="hd" onMouseLeave={() => setMenu(null)}>
         <div className="hd1">
           <div className="m-left">
-            <button className="ibtn" onClick={() => { setMOpen(true); setMSub(null); }} aria-label="Open menu">{Ico.menu}</button>
+            <button className="ibtn" onClick={openMobileMenu} aria-label="Open menu">{Ico.menu}</button>
             <button className="ibtn" onClick={() => setMSearchOpen(!mSearchOpen)} aria-label="Search">{Ico.search}</button>
           </div>
 
@@ -726,7 +755,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
 
         <nav className="hd2">
           {[["Services", "home"], ["Projects", "m"], ["Design Ideas", "m"], ["About", "about"], ["Price Estimator", "calc"], ["Latest Work", "latest"], ["More", "m"]].map(([s, a]) => <a key={s} className={(menu === s || (s === "About" && page === "about")) ? "on" : ""} onMouseEnter={() => setMenu(a === "m" ? s : null)}
-            onClick={() => { if (a === "m") setMenu(menu === s ? null : s); else if (a === "about" || a === "home") go(a); else if (a === "calc") setModal({ k: "calc", t: "Full Home" }); else { go("home"); setTimeout(() => document.getElementById(a)?.scrollIntoView({ behavior: "smooth" }), 80); } }}>{s}{a === "m" ? " ▾" : ""}</a>)}
+            onClick={() => { if (a === "m") setMenu(menu === s ? null : s); else if (a === "about" || a === "home") go(a); else if (a === "calc") { window.history.pushState({ modal: "calc" }, ""); setModal({ k: "calc", t: "Full Home" }); } else { go("home"); setTimeout(() => document.getElementById(a)?.scrollIntoView({ behavior: "smooth" }), 80); } }}>{s}{a === "m" ? " ▾" : ""}</a>)}
         </nav>
         {menu === "Projects" && <div className="mega"><div className="in" style={{ flexWrap: "wrap", gap: 18 }}>{PROJ.map(p => <div key={p[0]} className="pmini" onClick={() => go("gallery", "All", p[0])}><Pic src={IMG[p[2]]} alt="" /><div><b>{p[1]}</b><small>{cnt(p[0])} designs</small></div></div>)}</div></div>}
         {menu === "Design Ideas" && <div className="mega"><div className="in">{RM.map(([h, l]) => <div key={h}><h4>{h}</h4><ul>{l.map(x => <li key={x} onClick={() => go("gallery", x)}>{x} Designs</li>)}</ul></div>)}</div></div>}
@@ -739,7 +768,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   const Stats = <div className="sec alt" style={{ padding: "30px 0" }}><div className="wrap g4">{[["🏠", PROJ.length, "FEATURED PROJECTS"], ["🖼️", G.length + "+", "DESIGN VIEWS"], ["🛠️", SERVICES.length, "CORE SERVICES"], ["📍", "TS & AP", "TELANGANA & ANDHRA PRADESH"]].map(s => <div className="stat" key={s[2]}><i>{s[0]}</i><div><b>{s[1]}</b><span>{s[2]}</span></div></div>)}</div></div>;
   const Est = (
     <div className="sec dark"><div className="wrap"><h2>Interior <em>Price Estimator</em></h2><p className="sub" style={{ color: "#ccc" }}>Calculate the approximate cost of doing up your home interiors</p>
-      <div className="g3">{[["Full Home Interior", "Know the estimated price for your full home interiors.", "🛋️", "Full Home"], ["Kitchen", "Get an approximate costing for your modular kitchen.", "🍳", "Kitchen"], ["Wardrobe", "Our estimate for your dream wardrobe.", "🚪", "Wardrobe"]].map(c => <div className="est" key={c[0]}><span style={{ fontSize: 30 }}>{c[2]}</span><div><h3 className="serif">{c[0]}</h3><p>{c[1]}</p><button onClick={() => setModal({ k: "calc", t: c[3] })}>Calculate</button></div></div>)}</div></div>
+      <div className="g3">{[["Full Home Interior", "Know the estimated price for your full home interiors.", "🛋️", "Full Home"], ["Kitchen", "Get an approximate costing for your modular kitchen.", "🍳", "Kitchen"], ["Wardrobe", "Our estimate for your dream wardrobe.", "🚪", "Wardrobe"]].map(c => <div className="est" key={c[0]}><span style={{ fontSize: 30 }}>{c[2]}</span><div><h3 className="serif">{c[0]}</h3><p>{c[1]}</p><button onClick={() => { window.history.pushState({ modal: "calc" }, ""); setModal({ k: "calc", t: c[3] }); }}>Calculate</button></div></div>)}</div></div>
       <div style={{ height: 240, marginTop: 40, background: `${U(IMG.banner)} center/cover` }} /></div>
   );
   const Foot = (
@@ -791,11 +820,11 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
           <div><h3 style={{ fontSize: 24 }}>{STEPS[step][0]}</h3><p className="sub">{STEPS[step][1]}</p><ul className="tl">{STEPS[step][2].map(s => <li key={s}><b>{s}</b></li>)}</ul><a className="btn2 d" onClick={quote}>Start your project</a></div></div></div></div>
       <div className="sec"><div className="wrap"><div className="tech"><h2><Em t="Why |choose us|?" /></h2><p style={{ color: "#bbb", fontSize: 13 }}>Elevate Your Space with Us..!</p>
         <div className="cols c5">{WHY.map(c => <div key={c[0]}><h3 style={{ fontSize: 17 }}>{c[0]}</h3><span style={{ fontSize: 12.5 }}>{c[1]}</span></div>)}</div></div></div></div>
-      <div className="sec alt" id="latest"><div className="wrap"><div className="eyebrow">Portfolio</div><h2><Em t="Our latest |projects|" /></h2><div className="g4" style={{ gridTemplateColumns: "repeat(2,1fr)", marginTop: 24, gap: 24 }}>{LATEST.map(l => <div className="card lp" key={l[0]}><Pic src={IMG[l[0]]} alt={l[1]} onClick={() => setModal({ k: "img", src: IMG[l[0]], t: l[1] })} /><div className="b"><div className="eyebrow">{l[1]}</div><p style={{ margin: 0 }}>{l[2]}</p></div></div>)}</div></div></div>
+      <div className="sec alt" id="latest"><div className="wrap"><div className="eyebrow">Portfolio</div><h2><Em t="Our latest |projects|" /></h2><div className="g4" style={{ gridTemplateColumns: "repeat(2,1fr)", marginTop: 24, gap: 24 }}>{LATEST.map(l => <div className="card lp" key={l[0]}><Pic src={IMG[l[0]]} alt={l[1]} onClick={() => { window.history.pushState({ modal: "img" }, ""); setModal({ k: "img", src: IMG[l[0]], t: l[1] }); }} /><div className="b"><div className="eyebrow">{l[1]}</div><p style={{ margin: 0 }}>{l[2]}</p></div></div>)}</div></div></div>
       <div className="sec"><div className="wrap"><h2>Design ideas <em>by room</em></h2><p className="sub">Tap a room to see designs from all our projects.</p><div>{ROOMS.map(r => <span className="tag" key={r} onClick={() => go("gallery", r)}>{r}</span>)}</div>
         <div className="row" style={{ marginTop: 22 }}>{G.filter((g, i) => i % 6 === 0).slice(0, 14).map((g, i, a) => <div className="reel" key={g[2]} style={{ width: 260 }} onClick={() => open(a, i)}><Pic src={IMG[g[2]]} alt="" style={{ height: 190 }} /></div>)}</div></div></div>
       {Stats}
-      <div className="sec"><div className="wrap"><div className="eyebrow">Testimonials</div><h2><Em t="Reviews from |our clients|" /></h2><div className="g3" style={{ marginTop: 22 }}>{REVIEWS.map(r => <div className="tst" key={r[0]}><Pic src={IMG[r[4]]} alt="" onClick={() => setModal({ k: "img", src: IMG[r[4]], t: r[2] + " — " + r[3] })} /><blockquote><div style={{ fontSize: 13, color: "var(--acc)", fontStyle: "normal" }}>⭐ {r[0]}</div>“{r[1]}”</blockquote><small><b>{r[2].toUpperCase()}</b>{r[3]}</small></div>)}</div></div></div>
+      <div className="sec"><div className="wrap"><div className="eyebrow">Testimonials</div><h2><Em t="Reviews from |our clients|" /></h2><div className="g3" style={{ marginTop: 22 }}>{REVIEWS.map(r => <div className="tst" key={r[0]}><Pic src={IMG[r[4]]} alt="" onClick={() => { window.history.pushState({ modal: "img" }, ""); setModal({ k: "img", src: IMG[r[4]], t: r[2] + " — " + r[3] }); }} /><blockquote><div style={{ fontSize: 13, color: "var(--acc)", fontStyle: "normal" }}>⭐ {r[0]}</div>“{r[1]}”</blockquote><small><b>{r[2].toUpperCase()}</b>{r[3]}</small></div>)}</div></div></div>
       <div className="sec alt"><div className="wrap faq"><h2 style={{ fontSize: 30 }}>FAQs About <em>Our Studio</em></h2><div>{FAQS.map((f, i) => <div key={i} className="fq" onClick={() => setFaq(faq === i ? -1 : i)}><div><span style={{ color: faq === i ? "var(--acc)" : "" }}>{f[0]}</span><span>{faq === i ? "✕" : "+"}</span></div>{faq === i && <p>{f[1]}</p>}</div>)}</div></div></div>
       {Est}
       <div className="sec dark" id="lead"><div className="wrap leadw"><div className="lead"><div className="eyebrow">Get in touch</div><h2><Em t="Your dream interior is |one call| away." /></h2><p style={{ color: "#bbb" }}>Drop your details and our team will reach out. Or contact us directly:</p><p><a href={tel(B.phones[0])}>📞 {B.phones[0]}</a><br /><a href={tel(B.phones[1])}>📞 {B.phones[1]}</a><br /><a href={"mailto:" + B.email}>✉️ {B.email}</a><br />📍 {B.address}</p></div><LeadForm title="Talk to our |designers|" cta="Get Free Consultation" api={API} onLeadSaved={connectChatSession} /></div></div>
@@ -813,7 +842,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
           <div className="dg">{list.slice(0, vis).flatMap((g, i) => {
             const t = <div className="di" key={g[2]} onClick={() => open(list, i)}><Pic src={IMG[g[2]]} alt={g[1]} loading="lazy" /><p>{g[1]} · {PN[g[0]]}</p></div>;
             if (i === 2) return [t, <div className="promo" key="pr"><h3 className="serif">Why choose us?</h3><ul style={{ marginTop: 10, lineHeight: 1.9 }}>{WHY.map(w => <li key={w[0]}>✔ {w[0]}</li>)}</ul><button className="btn2" onClick={quote}>Get free consultation</button></div>];
-            if (i === 6) return [t, <div className="promo t" key="pc"><h3 className="serif">Calculate the cost of your interiors</h3><button className="btnw" style={{ margin: 0 }} onClick={() => setModal({ k: "calc", t: "Full Home" })}>Calculate now</button></div>];
+            if (i === 6) return [t, <div className="promo t" key="pc"><h3 className="serif">Calculate the cost of your interiors</h3><button className="btnw" style={{ margin: 0 }} onClick={() => { window.history.pushState({ modal: "calc" }, ""); setModal({ k: "calc", t: "Full Home" }); }}>Calculate now</button></div>];
             return [t];
           })}</div>
           {vis < list.length && <div style={{ textAlign: "center", margin: "30px 0" }}><button className="btn2 d" onClick={() => setVis(vis + 12)}>Load more ({list.length - vis} left)</button></div>}</>}
@@ -919,13 +948,13 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
         </div>
       )}
 
-      {modal && <div className="mod" onClick={() => setModal(null)}>
-        {modal.k === "offer" && <div className="mbox offer" style={{ maxWidth: 300 }} onClick={e => e.stopPropagation()}><button className="x" onClick={() => setModal(null)}>✕</button><Pic src={IMG.h4} alt="" /><div className="p"><b className="serif" style={{ fontSize: 20 }}>Free design consultation</b><div style={{ fontSize: 13, margin: "6px 0 12px" }}>Fill in your details and {B.name} will call you.</div><input placeholder="Enter your name" id="of-n" /><input placeholder="IN +91  Enter Mobile No." id="of-m" /><input placeholder="Enter Pincode" id="of-p" /><button onClick={async () => { const name = document.getElementById("of-n").value, phone = document.getElementById("of-m").value, loc = document.getElementById("of-p").value; if (name && phone) { await fetch(`${API}/api/leads`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, phone, loc }) }).catch(() => {}); await connectChatSession(name, phone, loc ? `Popup enquiry (Pincode: ${loc})` : "Popup enquiry"); } setModal({ k: "msg", t: "Thank you! Our team will call you shortly." }); }}>Submit</button></div></div>}
-        {modal.k === "lead" && <div className="mbox" onClick={e => e.stopPropagation()}><button className="x" onClick={() => setModal(null)}>✕</button><LeadForm title="Get your |free consultation|" cta="Get Free Consultation" api={API} onLeadSaved={connectChatSession} /></div>}
-        {modal.k === "calc" && <Calculator type={modal.t} onClose={() => setModal(null)} />}
-        {modal.k === "msg" && <div className="mbox" style={{ padding: 32, textAlign: "center" }} onClick={e => e.stopPropagation()}><button className="x" onClick={() => setModal(null)}>✕</button><p className="serif" style={{ fontSize: 18 }}>{modal.t}</p></div>}
-        {modal.k === "img" && <div className="mbox w" onClick={e => e.stopPropagation()}><button className="x" onClick={() => setModal(null)}>✕</button><Pic src={modal.src} alt="" style={{ width: "100%", maxHeight: "75vh", objectFit: "contain", background: "#111" }} /><div style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}><b className="serif">{modal.t}</b><button className="btn2 d" onClick={quote}>Get Quote</button></div></div>}
-        {modal.k === "lb" && (() => { const g = modal.list[modal.i]; const isVid = byType[g[2]] === "video" || isVidUrl(IMG[g[2]]); return <div className="mbox w" onClick={e => e.stopPropagation()}><button className="x" onClick={() => setModal(null)}>✕</button><div style={{ position: "relative", background: "#111" }}>{isVid ? <video src={IMG[g[2]]} controls autoPlay style={{ width: "100%", maxHeight: "72vh" }} /> : <Pic src={IMG[g[2]]} alt="" style={{ width: "100%", maxHeight: "72vh", objectFit: "contain" }} />}<button className="arr" style={{ left: 10 }} onClick={() => setModal({ ...modal, i: (modal.i + modal.list.length - 1) % modal.list.length })}>‹</button><button className="arr" style={{ right: 10 }} onClick={() => setModal({ ...modal, i: (modal.i + 1) % modal.list.length })}>›</button></div><div style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}><div><b className="serif">{g[1]} · {PN[g[0]]}</b><div style={{ fontSize: 12, color: "#888" }}>{modal.i + 1} / {modal.list.length}</div></div><div><button className="btn2 d" onClick={quote}>Get Quote</button></div></div></div>; })()}
+      {modal && <div className="mod" onClick={closeModal}>
+        {modal.k === "offer" && <div className="mbox offer" style={{ maxWidth: 300 }} onClick={e => e.stopPropagation()}><button className="x" onClick={closeModal}>✕</button><Pic src={IMG.h4} alt="" /><div className="p"><b className="serif" style={{ fontSize: 20 }}>Free design consultation</b><div style={{ fontSize: 13, margin: "6px 0 12px" }}>Fill in your details and {B.name} will call you.</div><input placeholder="Enter your name" id="of-n" /><input placeholder="IN +91  Enter Mobile No." id="of-m" /><input placeholder="Enter Pincode" id="of-p" /><button onClick={async () => { const name = document.getElementById("of-n").value, phone = document.getElementById("of-m").value, loc = document.getElementById("of-p").value; if (name && phone) { await fetch(`${API}/api/leads`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, phone, loc }) }).catch(() => {}); await connectChatSession(name, phone, loc ? `Popup enquiry (Pincode: ${loc})` : "Popup enquiry"); } setModal({ k: "msg", t: "Thank you! Our team will call you shortly." }); }}>Submit</button></div></div>}
+        {modal.k === "lead" && <div className="mbox" onClick={e => e.stopPropagation()}><button className="x" onClick={closeModal}>✕</button><LeadForm title="Get your |free consultation|" cta="Get Free Consultation" api={API} onLeadSaved={connectChatSession} /></div>}
+        {modal.k === "calc" && <Calculator type={modal.t} onClose={closeModal} />}
+        {modal.k === "msg" && <div className="mbox" style={{ padding: 32, textAlign: "center" }} onClick={e => e.stopPropagation()}><button className="x" onClick={closeModal}>✕</button><p className="serif" style={{ fontSize: 18 }}>{modal.t}</p></div>}
+        {modal.k === "img" && <div className="mbox w" onClick={e => e.stopPropagation()}><button className="x" onClick={closeModal}>✕</button><Pic src={modal.src} alt="" style={{ width: "100%", maxHeight: "75vh", objectFit: "contain", background: "#111" }} /><div style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}><b className="serif">{modal.t}</b><button className="btn2 d" onClick={quote}>Get Quote</button></div></div>}
+        {modal.k === "lb" && (() => { const g = modal.list[modal.i]; const isVid = byType[g[2]] === "video" || isVidUrl(IMG[g[2]]); return <div className="mbox w" onClick={e => e.stopPropagation()}><button className="x" onClick={closeModal}>✕</button><div style={{ position: "relative", background: "#111" }}>{isVid ? <video src={IMG[g[2]]} controls autoPlay style={{ width: "100%", maxHeight: "72vh" }} /> : <Pic src={IMG[g[2]]} alt="" style={{ width: "100%", maxHeight: "72vh", objectFit: "contain" }} />}<button className="arr" style={{ left: 10 }} onClick={() => setModal({ ...modal, i: (modal.i + modal.list.length - 1) % modal.list.length })}>‹</button><button className="arr" style={{ right: 10 }} onClick={() => setModal({ ...modal, i: (modal.i + 1) % modal.list.length })}>›</button></div><div style={{ padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}><div><b className="serif">{g[1]} · {PN[g[0]]}</b><div style={{ fontSize: 12, color: "#888" }}>{modal.i + 1} / {modal.list.length}</div></div><div><button className="btn2 d" onClick={quote}>Get Quote</button></div></div></div>; })()}
       </div>}
     </div>
   );
