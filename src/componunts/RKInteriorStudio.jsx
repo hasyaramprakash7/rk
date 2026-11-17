@@ -16,13 +16,14 @@ const CSS = `
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px}.sec{padding:56px 0}.alt{background:var(--beige)}.dark{background:var(--ink);color:#eee}
 .eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-bottom:8px}
 .sec h2{font-size:30px;margin-bottom:6px}.sub{color:var(--mut);margin-bottom:24px}
-.ann{background:var(--ink);color:#fff;text-align:center;font-size:11px;letter-spacing:.06em;padding:8px 12px;text-transform:uppercase;position:relative;z-index:50}.ann a{text-decoration:underline}
 
 /* Smart Hide/Show Header on Scroll */
-.hd{position:sticky;top:0;z-index:45;background:var(--bg);border-bottom:1px solid var(--line);transition:transform 0.3s ease, opacity 0.3s ease}
-.hd.hidden{transform:translateY(-100%);opacity:0;pointer-events:none}
+.header-wrapper{position:fixed;top:0;left:0;right:0;z-index:90;background:var(--bg);box-shadow:0 2px 12px rgba(0,0,0,.06);transition:transform 0.3s ease, opacity 0.3s ease}
+.header-wrapper.hidden{transform:translateY(-100%);opacity:0;pointer-events:none}
 
-.hd1{display:flex;align-items:center;gap:28px;padding:14px 20px;max-width:1180px;margin:0 auto;position:relative}
+.ann{background:var(--ink);color:#fff;text-align:center;font-size:11px;letter-spacing:.06em;padding:8px 12px;text-transform:uppercase;position:relative;z-index:50}.ann a{text-decoration:underline}
+.hd{background:var(--bg);border-bottom:1px solid var(--line)}
+.hd1{display:flex;align-items:center;gap:28px;padding:12px 20px;max-width:1180px;margin:0 auto;position:relative}
 .logo{font-size:22px;letter-spacing:.22em;font-weight:600;cursor:pointer}.top a{margin-right:18px;font-size:15px}.top a.on{color:var(--acc)}
 .srch{flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#efebe4;border-radius:6px;padding:9px 12px}
 .srch input{border:0;background:transparent;outline:0;flex:1;font:inherit;min-width:0}
@@ -296,9 +297,13 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   const [mTab, setMTab] = useState(0);
   const [mSearchOpen, setMSearchOpen] = useState(false);
 
-  /* Browser popstate sync for back/forward buttons */
+  /* Browser history popstate & modal history sync */
   useEffect(() => {
     const handlePopState = (e) => {
+      if (modal) {
+        setModal(null);
+        return;
+      }
       if (e.state) {
         setPage(e.state.page || "home");
         setRoomF(e.state.roomF || "All");
@@ -307,7 +312,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [modal]);
 
   useEffect(() => {
     if (initialData) return;
@@ -326,6 +331,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
     if (chatBodyRef.current) chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
   }, [msgs, introMsgs, chat, chatUser]);
 
+  /* Scroll Hide/Show Header Logic */
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -457,7 +463,6 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
 
   const closeMobile = () => { setMOpen(false); setMSub(null); setMTab(0); };
   
-  /* Navigate with Browser History State & Scroll Restoration */
   const go = (p, room, proj) => { 
     const r = room || "All";
     const pr = proj || "All";
@@ -470,7 +475,11 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   };
   
   const quote = () => { closeMobile(); setModal({ k: "lead" }); };
-  const open = (l, i) => setModal({ k: "lb", list: l, i });
+  
+  const open = (l, i) => {
+    window.history.pushState({ modal: "lb" }, "");
+    setModal({ k: "lb", list: l, i });
+  };
 
   const chatFaqs = D.chatFaqs || [];
   const findAutoReply = t => {
@@ -689,9 +698,9 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
   );
 
   const Top = (
-    <>
+    <div className={"header-wrapper" + (showHd ? "" : " hidden")}>
       <div className="ann">{ann === 0 ? <>Elevate your space with us · <a onClick={quote}>Get free consultation →</a></> : <>{B.branches} · <a href={tel(B.phones[0])}>Call {B.phones[0]}</a></>}</div>
-      <div className={"hd" + (showHd ? "" : " hidden")} onMouseLeave={() => setMenu(null)}>
+      <div className="hd" onMouseLeave={() => setMenu(null)}>
         <div className="hd1">
           <div className="m-left">
             <button className="ibtn" onClick={() => { setMOpen(true); setMSub(null); }} aria-label="Open menu">{Ico.menu}</button>
@@ -724,7 +733,7 @@ export default function RKInteriorStudio({ initialPage = "home", apiUrl = DEFAUL
         {menu === "More" && <div className="mega"><div className="in"><div><h4>Contact</h4><ul><li onClick={() => go("contact")}>Contact Us</li><li><a href={tel(B.phones[0])}>{B.phones[0]}</a></li><li><a href={tel(B.phones[1])}>{B.phones[1]}</a></li><li><a href={"mailto:" + B.email}>{B.email}</a></li></ul></div><div><h4>Follow</h4><ul><li><a href={B.insta} target="_blank" rel="noreferrer">Instagram</a></li><li><a href={WA} target="_blank" rel="noreferrer">WhatsApp</a></li></ul></div><div><h4>{B.name}</h4><ul><li onClick={() => go("about")}>About Us</li><li onClick={() => go("about")}>Our Vision & Mission</li><li onClick={() => go("about")}>Why Choose Us</li></ul></div></div></div>}
       </div>
       {MobileDrawer}
-    </>
+    </div>
   );
 
   const Stats = <div className="sec alt" style={{ padding: "30px 0" }}><div className="wrap g4">{[["🏠", PROJ.length, "FEATURED PROJECTS"], ["🖼️", G.length + "+", "DESIGN VIEWS"], ["🛠️", SERVICES.length, "CORE SERVICES"], ["📍", "TS & AP", "TELANGANA & ANDHRA PRADESH"]].map(s => <div className="stat" key={s[2]}><i>{s[0]}</i><div><b>{s[1]}</b><span>{s[2]}</span></div></div>)}</div></div>;
